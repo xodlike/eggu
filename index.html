@@ -1,3 +1,4 @@
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,10 +12,83 @@
         height: 100vh;
         margin: 0;
         background: linear-gradient(to bottom, white, #b6fcb6);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      }
+
+      .egg-button {
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        display: inline-block;
+      }
+
+      .egg-button:focus {
+        outline: 3px solid rgba(66, 153, 225, 0.6);
+        outline-offset: 6px;
+        border-radius: 8px;
+      }
+
+      .counter {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255,255,255,0.85);
+        padding: 8px 12px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        font-weight: 600;
+      }
+
+      #eggImage {
+        display: block;
+        transition: transform 120ms ease;
+        will-change: transform;
+      }
+
+      #eggImage.pulse {
+        transform: scale(1.16);
       }
     </style>
 </head>
 <body>
-  <img src="yoshi-egg.webp" alt="Incubating...." height="100" />
+  <div class="counter" id="counter">Clicks: 0</div>
+
+  <button id="eggButton" class="egg-button" aria-label="Click the Yoshi egg">
+    <img id="eggImage" src="yoshi-egg.webp" alt="Yoshi egg" height="100" />
+  </button>
+
+  <script>
+    (function(){
+      const STORAGE_KEY = 'yoshiEggClicks';
+      const btn = document.getElementById('eggButton');
+      const img = document.getElementById('eggImage');
+      const counterEl = document.getElementById('counter');
+
+      let count = 0;
+      try {
+        count = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0;
+      } catch (e) {
+        // localStorage might be unavailable in some contexts; ignore errors
+        count = 0;
+      }
+
+      function render() {
+        counterEl.textContent = 'Clicks: ' + count;
+        img.title = count + ' clicks';
+      }
+
+      render();
+
+      btn.addEventListener('click', function () {
+        count += 1;
+        try { localStorage.setItem(STORAGE_KEY, String(count)); } catch (e) { /* ignore */ }
+        render();
+        img.classList.add('pulse');
+        setTimeout(function(){ img.classList.remove('pulse'); }, 160);
+      });
+    })();
+  </script>
 </body>
 </html>
