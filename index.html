@@ -1,94 +1,352 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>My Web Page</title>
-    <style>
-      body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        background: linear-gradient(to bottom, white, #b6fcb6);
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Yoshi Egg Clicker</title>
+  <style>
+    :root{
+      --bg1:#f8fff8;
+      --bg2:#b6fcb6;
+      --panel:#ffffffcc;
+      --accent:#46c26b;
+      --muted:#6b6b6b;
+    }
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial}
+    body{
+      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      display:flex;align-items:center;justify-content:center;padding:20px;
+    }
 
-      .egg-button {
-        background: transparent;
-        border: none;
-        padding: 0;
-        margin: 0;
-        cursor: pointer;
-        display: inline-block;
-      }
+    .game {
+      width:100%;max-width:960px;background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(255,255,255,0.8));
+      border-radius:12px;box-shadow:0 12px 40px rgba(10,20,10,0.12);overflow:hidden;display:grid;grid-template-columns:1fr 360px;
+    }
 
-      .egg-button:focus {
-        outline: 3px solid rgba(66, 153, 225, 0.6);
-        outline-offset: 6px;
-        border-radius: 8px;
-      }
+    .main{
+      padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;
+    }
 
-      .counter {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(255,255,255,0.85);
-        padding: 8px 12px;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-        font-weight: 600;
-      }
+    .stats{position:absolute;top:16px;left:16px;background:var(--panel);padding:8px 12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06);font-weight:600}
 
-      #eggImage {
-        display: block;
-        transition: transform 120ms ease;
-        will-change: transform;
-      }
+    .egg-area{display:flex;flex-direction:column;align-items:center;gap:12px}
+    #eggButton{background:transparent;border:none;padding:0;cursor:pointer}
+    #eggImage{height:160px;transition:transform .12s ease;will-change:transform}
+    #eggImage.pulse{transform:scale(1.16)}
 
-      #eggImage.pulse {
-        transform: scale(1.16);
-      }
-    </style>
+    .big-count{font-size:28px;font-weight:700;color:#145214}
+    .sub{color:var(--muted);font-size:13px}
+
+    .floating{position:absolute;pointer-events:none;font-weight:700;color:var(--accent);transform:translateY(-10px);opacity:0;transition:transform .6s ease,opacity .6s}
+
+    .sidebar{padding:18px;background:linear-gradient(180deg,#fff,#f6fff6);border-left:1px solid rgba(0,0,0,0.02);min-height:420px}
+    .panel{background:var(--panel);padding:12px;border-radius:10px;margin-bottom:12px;box-shadow:0 6px 18px rgba(0,0,0,0.04)}
+    h3{margin:0 0 8px 0}
+
+    .store-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,#fff,#fbfffb)}
+    .store-left{display:flex;gap:8px;align-items:center}
+    .btn{background:var(--accent);color:#fff;padding:8px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+    .btn[disabled]{opacity:.5;cursor:not-allowed}
+
+    .controls{display:flex;gap:8px;margin-top:8px}
+    .small{font-size:12px;padding:6px 8px}
+
+    .ach-list{display:flex;flex-direction:column;gap:6px}
+    .ach{padding:8px;border-radius:8px;background:#fffefc;border:1px solid rgba(0,0,0,0.03);font-size:13px}
+
+    footer{padding:12px;text-align:center;color:var(--muted);font-size:13px}
+
+    @media(max-width:820px){.game{grid-template-columns:1fr}.sidebar{order:2}}
+  </style>
 </head>
 <body>
-  <div class="counter" id="counter">Clicks: 0</div>
+  <div class="game" role="application" aria-label="Yoshi Egg Clicker">
+    <div class="main">
+      <div class="stats" id="stats">Eggs: 0 • CPS: 0</div>
 
-  <button id="eggButton" class="egg-button" aria-label="Click the Yoshi egg">
-    <img id="eggImage" src="yoshi-egg.webp" alt="Yoshi egg" height="100" />
-  </button>
+      <div class="egg-area">
+        <div class="big-count" id="bigCount">0</div>
+        <div class="sub" id="perClick">Per Click: 1</div>
+
+        <button id="eggButton" aria-label="Tap the Yoshi egg">
+          <img id="eggImage" src="yoshi-egg.webp" alt="Yoshi egg" />
+        </button>
+        <div class="sub">Click the egg to collect eggs. Save is automatic.</div>
+      </div>
+
+      <div id="floatContainer"></div>
+      <div style="position:absolute;bottom:14px;left:18px;display:flex;gap:8px;align-items:center">
+        <button class="small btn" id="importBtn">Import</button>
+        <button class="small" id="exportBtn">Export</button>
+        <button class="small" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="panel">
+        <h3>Upgrades</h3>
+        <div id="store"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Upgrades owned</h3>
+        <div id="owned"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Achievements</h3>
+        <div class="ach-list" id="achievements"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Save</h3>
+        <div class="sub">Auto-saves every 5s. You can export/import JSON for backups.</div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>Yoshi Egg Clicker — Static HTML only. Works in any generic nginx container.</footer>
 
   <script>
-    (function(){
-      const STORAGE_KEY = 'yoshiEggClicks';
-      const btn = document.getElementById('eggButton');
-      const img = document.getElementById('eggImage');
-      const counterEl = document.getElementById('counter');
+  (() => {
+    // Game configuration and state
+    const STORAGE_KEY = 'yoshiEggClicker_v1';
 
-      let count = 0;
-      try {
-        count = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0;
-      } catch (e) {
-        // localStorage might be unavailable in some contexts; ignore errors
-        count = 0;
+    const defaultState = {
+      eggs: 0,
+      perClick: 1,
+      cps: 0,
+      lastTick: Date.now(),
+      upgrades: {},
+      achievements: {},
+    };
+
+    // Define store items
+    const STORE = [
+      { id: 'cursor', name: 'Tiny Helper', baseCost: 15, cps: 0.1, perClick:0, desc: 'A tiny friend that collects eggs slowly.' },
+      { id: 'fence', name: 'Fence of Comfort', baseCost: 100, cps: 1, perClick:0, desc: 'Makes your egg feel safe and productive.' },
+      { id: 'nursery', name: 'Nursery', baseCost: 500, cps: 5, perClick:0, desc: 'A proper place to incubate more eggs.' },
+      { id: 'feather', name: 'Lucky Feather', baseCost: 80, cps:0, perClick:1, desc: 'Increases eggs per click.' },
+      { id: 'multiplier', name: 'Yoshi Cheer', baseCost: 1200, cps:0, perClick:0, multiplier:1.15, desc: 'Each purchase increases all yields.' }
+    ];
+
+    // Achievements
+    const ACHS = [
+      { id:'click10', title:'Starter Peck', condition: s => s.eggs >= 10 },
+      { id:'click100', title:'Egg Enthusiast', condition: s => s.eggs >= 100 },
+      { id:'own1', title:'First Helper', condition:s => (s.upgrades.cursor||0) >= 1 },
+      { id:'powered', title:'Powered Up', condition:s => s.cps >= 10 }
+    ];
+
+    // Helpers
+    function format(n){ if(n>=1e6) return (n/1e6).toFixed(2)+'M'; if(n>=1000) return (n/1000).toFixed(1)+'k'; return Math.floor(n); }
+
+    // Load or init
+    let state;
+    try{ state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultState; }
+    catch(e){ state = defaultState; }
+
+    // ensure structure
+    state.upgrades = state.upgrades || {};
+    state.achievements = state.achievements || {};
+
+    // UI refs
+    const bigCount = document.getElementById('bigCount');
+    const perClickEl = document.getElementById('perClick');
+    const stats = document.getElementById('stats');
+    const storeEl = document.getElementById('store');
+    const ownedEl = document.getElementById('owned');
+    const achievementsEl = document.getElementById('achievements');
+    const eggBtn = document.getElementById('eggButton');
+    const eggImg = document.getElementById('eggImage');
+    const floatContainer = document.getElementById('floatContainer');
+    const resetBtn = document.getElementById('resetBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+
+    // Compute derived values
+    function computeCPS(s){
+      let cps = 0;
+      for(const item of STORE){
+        const cnt = s.upgrades[item.id]||0;
+        if(item.cps) cps += item.cps * cnt;
+      }
+      // multipliers
+      let mult = 1;
+      const mulCnt = s.upgrades.multiplier||0;
+      if(mulCnt) mult *= Math.pow(1.15, mulCnt);
+      return cps * mult;
+    }
+
+    function computePerClick(s){
+      let pc = s.perClick || 1;
+      for(const item of STORE){
+        const cnt = s.upgrades[item.id]||0;
+        if(item.perClick) pc += item.perClick * cnt;
+      }
+      const mulCnt = s.upgrades.multiplier||0;
+      if(mulCnt) pc *= Math.pow(1.15, mulCnt);
+      return pc;
+    }
+
+    // Cost formula (exponential)
+    function priceFor(item, owned){
+      return Math.ceil(item.baseCost * Math.pow(1.15, owned));
+    }
+
+    // UI render
+    function render(){
+      state.cps = computeCPS(state);
+      const pc = computePerClick(state);
+      bigCount.textContent = format(state.eggs);
+      perClickEl.textContent = 'Per Click: ' + (pc%1?pc.toFixed(2):pc);
+      stats.textContent = `Eggs: ${format(state.eggs)} • CPS: ${state.cps.toFixed(2)}`;
+
+      // Store
+      storeEl.innerHTML = '';
+      for(const item of STORE){
+        const owned = state.upgrades[item.id]||0;
+        const cost = priceFor(item, owned);
+        const div = document.createElement('div'); div.className='store-item';
+        div.innerHTML = `<div class="store-left"><div><strong>${item.name}</strong><div class="sub">${item.desc}</div></div></div>`;
+        const right = document.createElement('div');
+        const info = document.createElement('div'); info.style.textAlign='right'; info.style.marginRight='8px';
+        info.innerHTML = `<div style="font-weight:700">${owned} owned</div><div class="sub">Cost: ${cost}</div>`;
+        const btn = document.createElement('button'); btn.className='btn small'; btn.textContent='Buy';
+        if(state.eggs < cost) btn.disabled = true;
+        btn.addEventListener('click', ()=>{ buy(item.id); });
+        right.appendChild(info);
+        right.appendChild(btn);
+        div.appendChild(right);
+        storeEl.appendChild(div);
       }
 
-      function render() {
-        counterEl.textContent = 'Clicks: ' + count;
-        img.title = count + ' clicks';
+      // Owned list
+      ownedEl.innerHTML = '';
+      for(const item of STORE){
+        const owned = state.upgrades[item.id]||0;
+        if(owned>0){
+          const el = document.createElement('div'); el.className='sub'; el.textContent = `${item.name}: ${owned}`;
+          ownedEl.appendChild(el);
+        }
       }
 
+      // Achievements
+      achievementsEl.innerHTML='';
+      for(const a of ACHS){
+        const got = state.achievements[a.id];
+        const el = document.createElement('div'); el.className='ach';
+        el.style.opacity = got? '1' : '0.6';
+        el.textContent = a.title + (got? ' ✅' : '');
+        achievementsEl.appendChild(el);
+      }
+    }
+
+    // Buy logic
+    function buy(id){
+      const item = STORE.find(i=>i.id===id);
+      const owned = state.upgrades[id]||0;
+      const cost = priceFor(item, owned);
+      if(state.eggs < cost) return;
+      state.eggs -= cost;
+      state.upgrades[id] = owned + 1;
+      // immediate effects: perClick items add to base perClick
+      if(item.perClick) state.perClick = (state.perClick||1) + item.perClick;
+      // show a little float
+      showFloat(`-${cost}`);
       render();
+      save();
+    }
 
-      btn.addEventListener('click', function () {
-        count += 1;
-        try { localStorage.setItem(STORAGE_KEY, String(count)); } catch (e) { /* ignore */ }
-        render();
-        img.classList.add('pulse');
-        setTimeout(function(){ img.classList.remove('pulse'); }, 160);
-      });
-    })();
+    // Floating text
+    function showFloat(text){
+      const el = document.createElement('div'); el.className='floating'; el.textContent = text;
+      floatContainer.appendChild(el);
+      // random position near egg
+      el.style.left = (Math.random()*140+200) + 'px';
+      el.style.top = (Math.random()*40 + 180) + 'px';
+      requestAnimationFrame(()=>{ el.style.opacity=1; el.style.transform='translateY(-60px)'; });
+      setTimeout(()=>{ el.style.opacity=0; el.style.transform='translateY(-100px)'; }, 700);
+      setTimeout(()=>el.remove(), 1400);
+    }
+
+    // Click handler
+    eggBtn.addEventListener('click', ()=>{
+      const pc = computePerClick(state);
+      state.eggs += pc;
+      eggImg.classList.add('pulse');
+      setTimeout(()=>eggImg.classList.remove('pulse'),140);
+      showFloat('+' + (pc%1?pc.toFixed(2):pc));
+      render();
+      save();
+      checkAchievements();
+    });
+
+    // Ticking for CPS
+    function tick(){
+      const now = Date.now();
+      const elapsed = Math.max(0, now - (state.lastTick || now));
+      const delta = elapsed/1000;
+      const cps = computeCPS(state);
+      state.eggs += cps * delta;
+      state.lastTick = now;
+      render();
+      checkAchievements();
+    }
+
+    // Achievements
+    function checkAchievements(){
+      for(const a of ACHS){
+        if(!state.achievements[a.id] && a.condition(state)){
+          state.achievements[a.id] = true;
+          // small notification
+          showFloat('Achievement!');
+        }
+      }
+    }
+
+    // Save/load
+    function save(){
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+    }
+
+    function reset(){
+      if(!confirm('Reset all progress?')) return;
+      state = JSON.parse(JSON.stringify(defaultState));
+      save(); render();
+    }
+
+    // Export/import
+    exportBtn.addEventListener('click', ()=>{
+      const data = JSON.stringify(state, null, 2);
+      const blob = new Blob([data], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='yoshi-egg-save.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    importBtn.addEventListener('click', ()=>{
+      const input = document.createElement('input'); input.type='file'; input.accept='application/json';
+      input.onchange = e => {
+        const f = e.target.files[0]; if(!f) return;
+        const r = new FileReader(); r.onload = ev => {
+          try{ const obj = JSON.parse(ev.target.result); state = obj; state.upgrades = state.upgrades||{}; state.achievements = state.achievements||{}; save(); render(); } catch(e){ alert('Invalid file'); }
+        }; r.readAsText(f);
+      };
+      input.click();
+    });
+
+    resetBtn.addEventListener('click', reset);
+
+    // Auto-save interval
+    setInterval(()=>{ save(); }, 5000);
+
+    // CPS tick interval (smooth)
+    setInterval(tick, 200);
+
+    // initial render
+    render();
+    checkAchievements();
+  })();
   </script>
 </body>
 </html>
